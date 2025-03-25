@@ -17,6 +17,16 @@ export type ReceivingFile = {
     totalChunks: number
 }
 
+// Track outgoing file transfers
+type OutgoingFileTransfer = {
+    fileName: string
+    peerId: string
+    totalChunks: number
+    sentChunks: number
+    acknowledgedChunks: number
+    onProgress: (progress: number) => void
+}
+
 type UsePeerConnectionReturn = {
     myPeerId: string
     peers: PeerConnection[]
@@ -33,6 +43,9 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
     const [peerInstance, setPeerInstance] = useState<Peer | null>(null)
     const [receivingFiles, setReceivingFiles] = useState<ReceivingFile[]>([])
 
+    // Use a ref to track outgoing file transfers
+    const outgoingTransfersRef = useRef<Record<string, OutgoingFileTransfer>>({})
+
     // Use useRef for the connectionListenersMap to ensure it persists across renders
     const connectionListenersMapRef = useRef(new WeakMap<DataConnection, boolean>())
 
@@ -45,8 +58,13 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
         return result
     }, [])
 
+    // Generate a unique transfer ID
+    const getTransferId = (fileName: string, peerId: string) => {
+        return `${fileName}_${peerId}`
+    }
+
     const handleIncomingData = useCallback((data: any) => {
-        console.log("handleIncomingData called with:", data);
+        console.log("handleIncomingData called with:", data.type);
 
         if (data.type === 'file-start') {
             console.log("Received file-start:", data.fileName);
@@ -59,11 +77,23 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
             }])
         } else if (data.type === 'file-chunk') {
             console.log("Received file-chunk:", data.fileName, data.chunkIndex);
+            // Find the peer who sent this
+            const peer = peers.find(p => p.connection === data.connection || p.id === data.senderId);
+
             setReceivingFiles(prev => {
                 return prev.map(file => {
                     if (file.name === data.fileName) {
                         const updatedChunks = [...file.chunks]
                         updatedChunks[data.chunkIndex] = data.chunk
+
+                        // Send an acknowledgment back to the sender
+                        if (peer?.connection) {
+                            peer.connection.send({
+                                type: 'chunk-ack',
+                                fileName: data.fileName,
+                                chunkIndex: data.chunkIndex
+                            })
+                        }
 
                         return {
                             ...file,
@@ -94,19 +124,54 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
 
                     // Show a toast notification
                     toast.success(`Downloaded ${file.name} (${formatFileSize(file.size)})`)
+
+                    // Send final acknowledgment
+                    const peer = peers.find(p => p.connection === data.connection || p.id === data.senderId);
+                    if (peer?.connection) {
+                        peer.connection.send({
+                            type: 'file-ack',
+                            fileName: data.fileName,
+                            status: 'complete'
+                        })
+                    }
                 }
 
                 return prev.filter((_, i) => i !== fileIndex)
             })
+        } else if (data.type === 'chunk-ack') {
+            // Handle chunk acknowledgment from receiver
+            const transferId = getTransferId(data.fileName, data.connection?.peer || '');
+            const transfer = outgoingTransfersRef.current[transferId];
+
+            if (transfer) {
+                transfer.acknowledgedChunks += 1;
+                const progress = (transfer.acknowledgedChunks / transfer.totalChunks) * 100;
+                transfer.onProgress(progress);
+
+                // Update the transfer in the ref
+                outgoingTransfersRef.current[transferId] = transfer;
+            }
+        } else if (data.type === 'file-ack' && data.status === 'complete') {
+            // Handle final file acknowledgment
+            const transferId = getTransferId(data.fileName, data.connection?.peer || '');
+            delete outgoingTransfersRef.current[transferId];
+            console.log(`File transfer ${transferId} completed and acknowledged`);
         }
-    }, [])
+    }, [peers])
 
     // Set up a function to safely add data event listeners exactly once per connection
     const setupConnectionListeners = useCallback((conn: DataConnection) => {
         const map = connectionListenersMapRef.current;
 
         if (!map.has(conn)) {
-            conn.on('data', handleIncomingData);
+            conn.on('data', (data: any) => {
+                // Attach connection information to the data
+                handleIncomingData({
+                    ...data,
+                    connection: conn,
+                    senderId: conn.peer
+                });
+            });
             map.set(conn, true);
             console.log(`Set up listeners for connection with ${conn.peer}`);
             return true;
@@ -207,6 +272,17 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
 
         const chunkSize = 64000
         const totalChunks = Math.ceil(file.size / chunkSize)
+        const transferId = getTransferId(file.name, peerId)
+
+        // Initialize the transfer tracking
+        outgoingTransfersRef.current[transferId] = {
+            fileName: file.name,
+            peerId,
+            totalChunks,
+            sentChunks: 0,
+            acknowledgedChunks: 0,
+            onProgress
+        }
 
         const sendChunk = async (chunkIndex: number) => {
             const start = chunkIndex * chunkSize
@@ -223,6 +299,14 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
                             chunkIndex,
                             fileName: file.name
                         })
+
+                        // Update sent chunks count
+                        const transfer = outgoingTransfersRef.current[transferId];
+                        if (transfer) {
+                            transfer.sentChunks += 1;
+                            outgoingTransfersRef.current[transferId] = transfer;
+                        }
+
                         resolve()
                     } catch (error) {
                         setTimeout(trySend, 50)
@@ -239,16 +323,46 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
             fileSize: file.size
         })
 
+        // Send initial progress to show file transfer has started
+        onProgress(0);
+
+        // Queue all chunks to be sent
         for (let i = 0; i < totalChunks; i++) {
             await sendChunk(i)
-            const progress = ((i + 1) / totalChunks) * 100
-            onProgress(progress)
+
+            // Only update UI with a throttled progress based on sent chunks
+            // The real progress (acknowledged chunks) will be updated via chunk-ack messages
+            if (i % Math.max(1, Math.floor(totalChunks / 10)) === 0) {
+                // This is just a UI progress indicator for sent chunks
+                // The final accurate progress comes from chunk-ack
+                const sentProgress = ((i + 1) / totalChunks) * 100
+                // This caps progress at 90% until we get all acknowledgments
+                const cappedProgress = Math.min(sentProgress, 90)
+                onProgress(cappedProgress)
+            }
         }
 
         peer.connection.send({
             type: 'file-end',
             fileName: file.name,
         })
+
+        // Set up a timeout to check for successful transfer completion
+        const checkTransferComplete = () => {
+            const transfer = outgoingTransfersRef.current[transferId];
+            if (transfer) {
+                if (transfer.acknowledgedChunks >= transfer.totalChunks) {
+                    // All chunks acknowledged, transfer complete
+                    onProgress(100);
+                    delete outgoingTransfersRef.current[transferId];
+                } else {
+                    // Still waiting for acknowledgments
+                    setTimeout(checkTransferComplete, 500);
+                }
+            }
+        };
+
+        setTimeout(checkTransferComplete, 500);
     }, [peers])
 
     // Helper function to format file sizes
@@ -266,6 +380,6 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
         connectToPeer,
         sendFile,
         isConnected,
-        receivingFiles // Expose the receiving files
+        receivingFiles
     }
 } 
