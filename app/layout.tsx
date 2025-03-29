@@ -1,17 +1,19 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Oxanium } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner"
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
   subsets: ["latin"],
+  display: "swap",
+  variable: "--font-sans",
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const oxanium = Oxanium({
   subsets: ["latin"],
+  display: "swap",
+  variable: "--font-oxanium",
 });
 
 export const metadata: Metadata = {
@@ -25,10 +27,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${oxanium.variable}`}>
+      <body className="antialiased font-sans">
         <ThemeProvider defaultTheme="dark" storageKey="zapit-theme">
           {children}
         </ThemeProvider>
