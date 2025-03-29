@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Peer, DataConnection } from 'peerjs'
+import { Peer, DataConnection, PeerError } from 'peerjs'
 import { toast } from "sonner"
 
 type PeerConnection = {
@@ -29,22 +29,29 @@ type OutgoingFileTransfer = {
 }
 
 type UsePeerConnectionReturn = {
-    myPeerId: string
+    myPeerId: string | null
     peers: PeerConnection[]
     connectToPeer: (peerId: string) => Promise<void>
     sendFile: (file: File, peerId: string, onProgress: (progress: number, status: TransferStatus) => void) => Promise<void>
     isConnected: boolean
     receivingFiles: ReceivingFile[]
+    connectionError: PeerError<string> | null
+    clearConnectionError: () => void
 }
 
 export const usePeerConnection = (): UsePeerConnectionReturn => {
-    const [myPeerId, setMyPeerId] = useState('')
+    const [myPeerId, setMyPeerId] = useState<string | null>(null)
+    const peerRef = useRef<Peer | null>(null)
     const [peers, setPeers] = useState<PeerConnection[]>([])
+    const connectionsRef = useRef<Map<string, DataConnection>>(new Map())
     const [isConnected, setIsConnected] = useState(false)
-    const [peerInstance, setPeerInstance] = useState<Peer | null>(null)
     const [receivingFiles, setReceivingFiles] = useState<ReceivingFile[]>([])
     const outgoingTransfersRef = useRef<Record<string, OutgoingFileTransfer>>({})
-    const connectionListenersMapRef = useRef(new WeakMap<DataConnection, boolean>())
+    const [connectionError, setConnectionError] = useState<PeerError<string> | null>(null)
+
+    const clearConnectionError = useCallback(() => {
+        setConnectionError(null);
+    }, []);
 
     const generateShortId = useCallback(() => {
         const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
@@ -210,219 +217,202 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
     }, []) // Removed peers dependency as senderId comes from connection
 
     const setupConnectionListeners = useCallback((conn: DataConnection) => {
-        const map = connectionListenersMapRef.current;
+        const peerId = conn.peer
+        console.log(`Setting up listeners for connection with ${peerId}`)
 
-        if (!map.has(conn)) {
-            console.log(`Setting up listeners for connection with ${conn.peer}`);
-            conn.on('data', (data: any) => {
-                // Pass the connection itself to the handler
-                handleIncomingData(data, conn);
-            });
-            conn.on('close', () => {
-                console.log(`Connection closed with ${conn.peer}`);
-                map.delete(conn); // Clean up listener map
-                setPeers(prev => prev.filter(p => p.id !== conn.peer));
-                setIsConnected(peers.length > 1); // Update connected status
-                // Optionally cancel ongoing transfers with this peer
-                Object.keys(outgoingTransfersRef.current).forEach(transferId => {
-                    const transfer = outgoingTransfersRef.current[transferId];
-                    if (transfer.peerId === conn.peer && !transfer.isCompleteConfirmed) {
-                        console.warn(`Cancelling transfer ${transfer.fileName} due to connection close with ${conn.peer}`);
-                        transfer.onProgress(transfer.sentChunks / transfer.totalChunks * 100, 'error');
-                        delete outgoingTransfersRef.current[transferId];
-                    }
-                });
-            });
-            conn.on('error', (err) => {
-                console.error(`Connection error with ${conn.peer}:`, err);
-                map.delete(conn); // Clean up listener map
-                setPeers(prev => prev.filter(p => p.id !== conn.peer));
-                setIsConnected(peers.length > 1);
-                // Optionally cancel ongoing transfers with this peer similar to 'close'
-                Object.keys(outgoingTransfersRef.current).forEach(transferId => {
-                    const transfer = outgoingTransfersRef.current[transferId];
-                    if (transfer.peerId === conn.peer && !transfer.isCompleteConfirmed) {
-                        console.warn(`Cancelling transfer ${transfer.fileName} due to connection error with ${conn.peer}`);
-                        transfer.onProgress(transfer.sentChunks / transfer.totalChunks * 100, 'error');
-                        delete outgoingTransfersRef.current[transferId];
-                    }
-                });
-            });
-            map.set(conn, true);
-            return true;
-        } else {
-            console.log(`Listeners already exist for connection with ${conn.peer}`);
-            return false;
-        }
-    }, [handleIncomingData, peers.length]); // Added peers.length dependency for setIsConnected
+        // Clear any previous error related to connecting to this peer upon success
+        setConnectionError(prevError => {
+            // Check if the error was related to this specific peer before clearing
+            // Note: PeerJS errors might not always directly contain the target peer ID in a structured way
+            // Simple clear on any successful connection might be okay, or add more logic if needed.
+            return null;
+        });
 
+
+        conn.on('data', (data: any) => {
+            // Update lastSeen on any data received
+            setPeers(prevPeers => prevPeers.map(p =>
+                p.id === peerId ? { ...p, lastSeen: Date.now() } : p
+            ))
+            handleIncomingData(data, conn) // Pass connection object
+        })
+
+        conn.on('open', () => {
+            console.log(`Data connection opened with ${peerId}`)
+            // setIsConnected(true) // Set based on peerRef connection to server
+            connectionsRef.current.set(peerId, conn)
+            setPeers(prevPeers => {
+                // Avoid adding duplicate peers if 'open' fires multiple times or races with 'connection'
+                if (prevPeers.some(p => p.id === peerId)) {
+                    return prevPeers.map(p => p.id === peerId ? { ...p, lastSeen: Date.now() } : p);
+                }
+                return [...prevPeers, { id: peerId, connection: conn, lastSeen: Date.now() }]
+            })
+        })
+
+        conn.on('close', () => {
+            console.warn(`Data connection closed with ${peerId}`)
+            connectionsRef.current.delete(peerId)
+            setPeers(prevPeers => prevPeers.filter(p => p.id !== peerId))
+            // Maybe set global isConnected to false if peers.length becomes 0?
+            // if (connectionsRef.current.size === 0) setIsConnected(false);
+            toast.info(`Peer ${peerId} disconnected.`);
+        })
+
+        conn.on('error', (err) => {
+            console.error(`Data connection error with ${peerId}:`, err)
+            connectionsRef.current.delete(peerId)
+            setPeers(prevPeers => prevPeers.filter(p => p.id !== peerId))
+            setConnectionError(err); // Store connection-specific errors too
+            toast.error(`Error with peer ${peerId}: ${err.message}`);
+        })
+    }, [handleIncomingData])
 
     useEffect(() => {
         const initializePeer = () => {
-            let currentPeer: Peer | null = null;
-            let peerIdToDestroy: string | null = null;
+            console.log("Initializing PeerJS...")
+            // Cleanup previous peer instance if exists
+            if (peerRef.current) {
+                console.log("Destroying previous PeerJS instance.")
+                peerRef.current.destroy()
+                peerRef.current = null;
+                setMyPeerId(null);
+                setPeers([]);
+                connectionsRef.current.clear();
+                setIsConnected(false);
+                setConnectionError(null); // Clear error on re-initialization
+            }
 
             const createPeer = () => {
                 const shortId = generateShortId()
-                console.log("Attempting to initialize PeerJS with ID:", shortId);
-                const peer = new Peer(shortId, {
-                    debug: 0, // Set to 1 or 2 for more verbose PeerJS logs
-                    config: {
-                        iceServers: [
-                            { urls: 'stun:stun.l.google.com:19302' },
-                            { urls: 'stun:global.stun.twilio.com:3478' },
-                        ],
-                    },
-                })
-                currentPeer = peer;
-                peerIdToDestroy = shortId; // Store the ID we attempted to create
+                console.log(`Attempting to create PeerJS instance with ID: ${shortId}`)
+                // Explicitly provide host and port for local development if needed
+                // const peer = new Peer(shortId, {
+                //     host: 'localhost',
+                //     port: 9000,
+                //     path: '/myapp'
+                // });
+                const peer = new Peer(shortId); // Use default PeerServer Cloud
+                peerRef.current = peer
 
                 peer.on('open', (id) => {
-                    console.log('PeerJS connection open. My Peer ID is:', id);
+                    console.log('PeerJS connection open. My Peer ID is:', id)
                     setMyPeerId(id)
-                    setPeerInstance(peer)
-                    peerIdToDestroy = null; // Successfully opened, don't destroy this one later
+                    setIsConnected(true) // Connected to PeerJS server
+                    setConnectionError(null); // Clear any previous error on successful open
                 })
 
                 peer.on('connection', (conn) => {
-                    console.log(`Incoming connection from ${conn.peer}`);
-                    conn.on('open', () => {
-                        console.log(`Data connection opened with ${conn.peer}`);
-                        if (setupConnectionListeners(conn)) {
-                            setPeers(prev => {
-                                const existingPeerIndex = prev.findIndex(p => p.id === conn.peer)
-                                if (existingPeerIndex === -1) {
-                                    console.log(`Adding new peer: ${conn.peer}`);
-                                    return [...prev, { id: conn.peer, connection: conn, lastSeen: Date.now() }]
-                                } else {
-                                    console.log(`Updating existing peer connection: ${conn.peer}`);
-                                    // Close the old connection before replacing? PeerJS might handle this.
-                                    // prev[existingPeerIndex].connection?.close();
-                                    const newPeers = [...prev]
-                                    newPeers[existingPeerIndex] = { id: conn.peer, connection: conn, lastSeen: Date.now() }
-                                    return newPeers
-                                }
-                            })
-                            setIsConnected(true);
-                        }
-                    });
+                    console.log(`Incoming connection from ${conn.peer}`)
+                    if (connectionsRef.current.has(conn.peer)) {
+                        console.log(`Already connected to ${conn.peer}. Ignoring new connection request.`);
+                        // Optionally close the new connection if needed: conn.close();
+                        return;
+                    }
+                    toast.info(`Incoming connection from ${conn.peer}`)
+                    setupConnectionListeners(conn)
                 })
 
                 peer.on('error', (err) => {
                     console.error('PeerJS error:', err.type, err);
+                    setConnectionError(err); // Store the error object in state
+
                     // Specific handling for ID taken
                     if (err.type === 'unavailable-id') {
                         console.warn(`Peer ID ${shortId} is already taken. Retrying...`);
                         peer.destroy(); // Clean up the failed peer instance
                         setTimeout(createPeer, 100); // Retry after a short delay
-                    } else if (err.type !== 'peer-unavailable') {
-                        // Handle other significant errors if needed
-                        // Maybe reset state or inform the user
+                    } else if (err.type === 'disconnected') {
+                        // Handle temporary server disconnection
+                        console.warn('PeerJS disconnected from signaling server. Attempting to reconnect...');
+                        setIsConnected(false);
+                        // PeerJS attempts reconnection automatically. We might want to update UI.
+                    } else if (err.type === 'network') {
+                        // Handle network errors (e.g., server unreachable)
+                        console.error('PeerJS network error. Could not reach signaling server.');
+                        setIsConnected(false);
+                        // Maybe schedule a retry or inform the user persistently
+                    } else if (err.type === 'server-error') {
+                        console.error('PeerJS server error.');
+                        setIsConnected(false);
                     }
+                    // Note: 'peer-unavailable' is typically associated with a DataConnection error,
+                    // but might appear here if the server check fails immediately.
+                    // The setConnectionError(err) above will capture it.
                 })
 
                 peer.on('disconnected', () => {
-                    console.warn('PeerJS disconnected from signaling server. Attempting to reconnect...');
-                    // PeerJS attempts reconnection automatically by default unless destroy() is called.
-                    // We might want to update UI state here to indicate potential issues.
-                    // setIsConnected(false); // Or a specific "reconnecting" state
+                    // This event signifies temporary disconnection from the signaling server.
+                    console.warn('PeerJS disconnected from signaling server. PeerJS will attempt to reconnect.');
+                    setIsConnected(false);
+                    // Update UI to show a "reconnecting" or "disconnected" state.
+                    // Don't set connectionError here unless reconnection fails persistently (handled by 'error' event).
                 });
+
 
                 peer.on('close', () => {
                     console.log('PeerJS connection closed.');
-                    // This happens when destroy() is called.
+                    // This happens when destroy() is called or connection is lost permanently.
+                    setIsConnected(false);
+                    setMyPeerId(null); // Reset ID as the instance is gone
+                    setConnectionError(prevError => prevError || new PeerError('network', 'Peer instance closed.')); // Set a generic error if none exists
                 });
             }
 
-            createPeer(); // Start the creation process
-
-            return () => {
-                console.log("Cleaning up PeerJS instance...");
-                if (currentPeer) {
-                    currentPeer.destroy()
-                    console.log(`Peer ${currentPeer.id || peerIdToDestroy} destroyed.`);
-                } else if (peerIdToDestroy) {
-                    console.warn(`Peer instance for ID ${peerIdToDestroy} might not have been fully created or was already destroyed.`);
-                }
-                setPeerInstance(null);
-                setMyPeerId('');
-                setPeers([]);
-                setIsConnected(false);
-                outgoingTransfersRef.current = {}; // Clear outgoing transfers on cleanup
-            }
+            createPeer();
         }
 
         initializePeer()
 
-    }, [generateShortId, setupConnectionListeners]) // setupConnectionListeners is stable due to useCallback
+        return () => {
+            if (peerRef.current) {
+                console.log("Destroying PeerJS instance on component unmount.")
+                peerRef.current.destroy()
+                peerRef.current = null;
+            }
+        }
+    }, [setupConnectionListeners]) // setupConnectionListeners is memoized
 
     const connectToPeer = useCallback(async (peerId: string): Promise<void> => {
-        if (!peerInstance || !myPeerId) {
-            console.error("Peer instance not available for connecting.");
-            throw new Error("Peer not initialized");
+        if (!peerRef.current || !myPeerId) {
+            throw new Error('PeerJS not initialized.')
         }
         if (peerId === myPeerId) {
-            console.error("Cannot connect to self.");
-            throw new Error("Cannot connect to self");
+            throw new Error('Cannot connect to self.')
         }
-        if (peers.some(p => p.id === peerId)) {
-            console.warn(`Already connected or connecting to ${peerId}`);
-            // Maybe return early or resolve? For now, let it try again.
-            // return;
-        }
-
-
-        console.log(`Attempting to connect to peer: ${peerId}`);
-        return new Promise((resolve, reject) => {
-            try {
-                const conn = peerInstance.connect(peerId, {
-                    reliable: true, // Use reliable transport (uses SCTP)
-                    metadata: { sender: myPeerId }
-                });
-
-                conn.on('open', () => {
-                    console.log(`Data connection opened with ${peerId}`);
-                    if (setupConnectionListeners(conn)) {
-                        setPeers(prev => {
-                            const existingPeerIndex = prev.findIndex(p => p.id === peerId)
-                            if (existingPeerIndex === -1) {
-                                console.log(`Adding new peer via connect: ${peerId}`);
-                                return [...prev, { id: peerId, connection: conn, lastSeen: Date.now() }]
-                            } else {
-                                console.log(`Updating existing peer connection via connect: ${peerId}`);
-                                // prev[existingPeerIndex].connection?.close(); // Close old?
-                                const newPeers = [...prev]
-                                newPeers[existingPeerIndex] = { id: peerId, connection: conn, lastSeen: Date.now() }
-                                return newPeers
-                            }
-                        })
-                        setIsConnected(true);
-                    }
-                    resolve(); // Resolve promise on successful connection open
-                });
-
-                conn.on('error', (err) => {
-                    console.error(`Connection error with ${peerId}:`, err);
-                    // Remove peer if connection fails?
-                    setPeers(prev => prev.filter(p => p.id !== peerId));
-                    setIsConnected(peers.length > 1);
-                    reject(err); // Reject promise on error
-                });
-                conn.on('close', () => {
-                    console.log(`Connection closed with ${peerId} during connect attempt.`);
-                    // Usually means the remote peer destroyed the connection or peer instance.
-                    setPeers(prev => prev.filter(p => p.id !== peerId));
-                    setIsConnected(peers.length > 1);
-                    reject(new Error('Connection closed by peer')); // Reject promise on close before open
-                });
-
-            } catch (error) {
-                console.error(`Failed to initiate connection to ${peerId}:`, error);
-                reject(error); // Reject promise on initial connect error
+        if (connectionsRef.current.has(peerId)) {
+            console.log(`Already connected or connecting to ${peerId}.`);
+            // Optionally return early or re-setup listeners if needed
+            // Re-running setup might be useful if the previous connection state is uncertain
+            const existingConn = connectionsRef.current.get(peerId);
+            if (existingConn) {
+                // Ensure listeners are attached, especially if connection attempt was interrupted
+                // setupConnectionListeners(existingConn); // Careful not to duplicate listeners
             }
-        });
+            return; // Don't attempt a new connection if one exists/is pending
+        }
 
-    }, [peerInstance, myPeerId, setupConnectionListeners, peers.length]) // Added peers.length
+
+        console.log(`Attempting to connect to peer: ${peerId}`)
+        clearConnectionError(); // Clear previous errors before attempting new connection
+
+        try {
+            const conn = peerRef.current.connect(peerId, { reliable: true })
+            if (!conn) {
+                // This case should theoretically not happen if peerRef.current is valid,
+                // but handle defensively.
+                throw new Error(`Failed to initiate connection to ${peerId}.`);
+            }
+            connectionsRef.current.set(peerId, conn); // Store connection attempt immediately
+            setupConnectionListeners(conn) // Setup listeners immediately
+            // The actual 'open' state is handled by the event listeners setup above
+        } catch (error) {
+            console.error(`Error initiating connection to ${peerId}:`, error);
+            // Set error state if the .connect() call itself fails, though unlikely for 'peer-unavailable'
+            setConnectionError(new PeerError('network', `Failed to initiate connection: ${error instanceof Error ? error.message : String(error)}`));
+            throw error; // Re-throw immediate errors
+        }
+    }, [myPeerId, setupConnectionListeners, clearConnectionError])
 
     const sendFile = useCallback(async (file: File, peerId: string, onProgress: (progress: number, status: TransferStatus) => void) => {
         const peer = peers.find(p => p.id === peerId)
@@ -563,6 +553,8 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
         connectToPeer,
         sendFile,
         isConnected,
-        receivingFiles
+        receivingFiles,
+        connectionError,
+        clearConnectionError
     }
 }

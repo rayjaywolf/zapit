@@ -25,6 +25,7 @@ import { useState, useRef, useEffect } from "react"
 import { usePeerConnection, ReceivingFile } from "@/hooks/usePeerConnection"
 import { ConnectedPeers } from "@/components/ConnectedPeers"
 import { toast } from "sonner"
+import { PeerError } from 'peerjs'
 
 type FileWithSize = {
     name: string
@@ -60,12 +61,22 @@ export default function SharePage() {
     const [connectError, setConnectError] = useState("")
     const fileInputRef = useRef<HTMLInputElement>(null)
     const uploadStartTimeRef = useRef<number | null>(null)
-    const [connectionSuccess, setConnectionSuccess] = useState(false)
+    const [isConnecting, setIsConnecting] = useState(false);
+    const [connectingToPeerId, setConnectingToPeerId] = useState<string | null>(null);
     const filesToSendRef = useRef<FileWithSize[]>([]); // Ref to track files currently being sent
     const completedFilesRef = useRef<Set<string>>(new Set()); // Track confirmed completed files
+    const connectTimeoutRef = useRef<NodeJS.Timeout | null>(null); // Ref for the timeout
 
-
-    const { myPeerId, peers, connectToPeer, sendFile, isConnected, receivingFiles } = usePeerConnection()
+    const {
+        myPeerId,
+        peers,
+        connectToPeer,
+        sendFile,
+        isConnected,
+        receivingFiles,
+        connectionError: hookConnectionError, // Get error state from hook
+        clearConnectionError // Get clear function from hook
+    } = usePeerConnection()
 
     useEffect(() => {
         const detectDevice = () => {
@@ -199,6 +210,78 @@ export default function SharePage() {
         setDeviceInfo(detectDevice())
     }, [])
 
+    // Effect to handle connection errors from the hook
+    useEffect(() => {
+        if (hookConnectionError) {
+            console.log("Hook connection error detected:", hookConnectionError.type, hookConnectionError.message);
+            let userMessage = `Connection error: ${hookConnectionError.message}`; // Default message
+
+            // Customize message based on error type
+            switch (hookConnectionError.type) {
+                case 'peer-unavailable':
+                    // Extract target peer ID if possible (might be in the message)
+                    // This relies on the default message format, which isn't guaranteed
+                    const match = hookConnectionError.message.match(/peer (\w+)/);
+                    const targetPeer = match ? match[1] : connectingToPeerId || 'peer';
+                    userMessage = `Peer ${targetPeer} could not be found or is offline. Please check the Zap ID.`;
+                    break;
+                case 'network':
+                    userMessage = "Network error. Please check your connection and try again.";
+                    break;
+                case 'server-error':
+                case 'socket-error':
+                case 'socket-closed':
+                    userMessage = "Connection to server failed. Please try again later.";
+                    break;
+                case 'disconnected':
+                    // This might be temporary, timeout handles persistent disconnection better
+                    userMessage = "Disconnected from server. Attempting to reconnect...";
+                    // Don't clear connecting state for temporary disconnection
+                    setConnectError(userMessage); // Show temporary status
+                    // toast.warn(userMessage); // Use warn toast
+                    // clearConnectionError(); // Clear immediately as it might reconnect
+                    // return; // Skip resetting connecting state for 'disconnected'
+                    break;
+                case 'unavailable-id':
+                    // This is handled internally by the hook retrying, don't show user
+                    clearConnectionError();
+                    return;
+
+            }
+
+            // Update page state only for errors that should stop the connection attempt
+            setConnectError(userMessage);
+            toast.error(userMessage);
+
+            if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current); // Clear timeout
+            setIsConnecting(false); // Stop connecting indicator
+            setConnectingToPeerId(null); // Clear target ID
+
+            clearConnectionError(); // Reset the error state in the hook
+        }
+    }, [hookConnectionError, clearConnectionError, connectingToPeerId]);
+
+    // Effect to handle successful connection confirmation
+    useEffect(() => {
+        // Check if we were trying to connect and the target peer is now in the list
+        if (connectingToPeerId && peers.some(p => p.id === connectingToPeerId)) {
+            if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current); // Clear timeout on success
+            toast.success(`Successfully connected to ${connectingToPeerId}!`);
+            setIsConnecting(false); // Connection resolved successfully
+            setConnectingToPeerId(null); // Clear the target ID
+            setConnectError(""); // Clear any previous errors (like timeout or transient errors)
+        }
+    }, [peers, connectingToPeerId]); // Depend on peers list and the ID we are tracking
+
+    // Cleanup timeout on component unmount
+    useEffect(() => {
+        return () => {
+            if (connectTimeoutRef.current) {
+                clearTimeout(connectTimeoutRef.current);
+            }
+        };
+    }, []);
+
     const formatFileSize = (bytes: number) => {
         if (bytes === 0) return "0 Bytes"
         const k = 1024
@@ -305,7 +388,11 @@ export default function SharePage() {
     }
 
     const handleConnect = async () => {
-        setConnectError(""); // Clear previous errors
+        setConnectError(""); // Clear previous *page-level* errors
+        // We also clear the hook error via connectToPeer now
+        if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current); // Clear any existing timeout
+
+        // Validation checks
         if (!peerIdInput || peerIdInput.length !== 4) {
             setConnectError("Please enter a valid 4-character Peer ID")
             return
@@ -315,21 +402,45 @@ export default function SharePage() {
             return
         }
 
+        const targetPeerId = peerIdInput; // Store the ID before clearing the input
+
         try {
-            setConnectionSuccess(false); // Reset success state
-            await connectToPeer(peerIdInput)
-            // Success is primarily handled by the peer list update now
-            setConnectError("")
-            setPeerIdInput("")
-            setConnectionSuccess(true) // Set success state
-            toast.success(`Connection initiated to ${peerIdInput}. Waiting for response...`)
-            // Note: Actual connection success is when the peer appears in the 'peers' list.
-            // The toast might be slightly premature but indicates the attempt started.
+            setIsConnecting(true); // Set connecting status
+            setConnectingToPeerId(targetPeerId); // Track the ID we are attempting
+            setPeerIdInput(""); // Clear input field immediately
+            toast.info(`Attempting connection to ${targetPeerId}...`);
+
+            await connectToPeer(targetPeerId); // Call the hook function
+
+            // Set a timeout as a fallback mechanism
+            connectTimeoutRef.current = setTimeout(() => {
+                // Check if we are *still* connecting to the same peer after the timeout
+                if (connectingToPeerId === targetPeerId) {
+                    console.log(`Connection attempt to ${targetPeerId} timed out.`);
+                    const timeoutErrorMessage = `Connection to ${targetPeerId} timed out. Peer may be unavailable or offline.`;
+                    setConnectError(timeoutErrorMessage);
+                    setIsConnecting(false);
+                    setConnectingToPeerId(null); // Clear target ID on timeout
+                    toast.error(timeoutErrorMessage);
+                    // Optionally signal timeout to the hook if needed? For now, page handles timeout UI.
+                }
+            }, 15000); // 15-second timeout
+
+
         } catch (error: any) {
-            console.error("Connection failed:", error);
-            setConnectError(error.message || "Failed to connect. Peer might be unavailable or ID incorrect.")
-            setConnectionSuccess(false);
-            toast.error(`Failed to connect to ${peerIdInput}: ${error.message || 'Peer unavailable'}`)
+            // This catch block now primarily handles *immediate* errors from connectToPeer,
+            // like "PeerJS not initialized" or "Cannot connect to self".
+            // Asynchronous errors (like peer-unavailable) are handled by the useEffect watching hookConnectionError.
+            if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current); // Clear timeout on immediate error
+            console.error("Immediate connection initiation failed:", error);
+
+            // Use the error message directly if it's an Error object
+            const errorMessage = error instanceof Error ? error.message : "Failed to initiate connection.";
+
+            setConnectError(errorMessage);
+            setIsConnecting(false); // Set connecting status false on error
+            setConnectingToPeerId(null); // Clear the target ID
+            toast.error(`Connection failed: ${errorMessage}`);
         }
     }
 
@@ -519,7 +630,7 @@ export default function SharePage() {
                             <span className="sm:hidden">Device</span>
                         </Badge>
                         <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted/80 flex items-center gap-1.5 text-xs md:text-sm px-2 py-1">
-                            <span className="font-mono tracking-wider">ID: {myPeerId || "..."}</span>
+                            <span className="font-mono tracking-wider">Zap ID: {myPeerId || "..."}</span>
                         </Badge>
                     </div>
                     {/* Dynamic Status Badge */}
@@ -556,26 +667,25 @@ export default function SharePage() {
                         <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full px-4 md:px-0">
                             <div className="space-y-3 md:space-y-4 w-full">
                                 <Input
-                                    placeholder="Enter 4-character Peer ID"
+                                    placeholder="Enter 4-character Zap ID"
                                     value={peerIdInput}
-                                    onChange={(e) => setPeerIdInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} // Allow only uppercase letters and numbers
+                                    onChange={(e) => setPeerIdInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
                                     maxLength={4}
-                                    className="text-base md:text-lg text-center tracking-widest h-11 md:h-12 font-mono disabled:opacity-50"
-                                    disabled={!myPeerId} // Disable if not initialized yet
+                                    className="text-base md:text-lg text-center tracking-widest h-11 md:h-12 font-mono disabled:opacity-50 placeholder:text-sm placeholder:text-muted-foreground/70"
+                                    disabled={!myPeerId || isConnecting}
                                 />
                                 <Button
                                     onClick={handleConnect}
-                                    disabled={!myPeerId || !peerIdInput || peerIdInput.length !== 4 || peerIdInput === myPeerId}
+                                    disabled={!myPeerId || !peerIdInput || peerIdInput.length !== 4 || peerIdInput === myPeerId || isConnecting}
                                     className="w-full h-11 md:h-12 text-base"
                                 >
-                                    Connect
+                                    {/* Show specific peer ID only while connecting */}
+                                    {isConnecting && connectingToPeerId ? `Connecting to ${connectingToPeerId}...` : 'Connect'}
                                 </Button>
                             </div>
+                            {/* Display the page-level connectError state */}
                             {connectError && (
                                 <p className="text-xs md:text-sm text-red-500 mt-2 text-center">{connectError}</p>
-                            )}
-                            {connectionSuccess && peers.length === 0 && !connectError && (
-                                <p className="text-xs md:text-sm text-yellow-600 mt-2 text-center">Connecting...</p>
                             )}
                         </div>
                     </div>
