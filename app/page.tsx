@@ -33,60 +33,60 @@ export default function Home() {
   return (
     <div className="min-h-screen w-full bg-background">
       <header className="fixed top-0 w-full z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="flex h-16 items-center justify-between px-6 md:px-12 lg:px-24">
-          <div
-            className="font-oxanium font-semibold text-xl tracking-wide"
-            style={{ fontFamily: "var(--font-oxanium)" }}
-          >
+        <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 md:px-12 lg:px-24">
+          <div className="font-oxanium font-semibold text-lg sm:text-xl tracking-wide">
             ZAPIT
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex items-center">
             <Link href="/share">
-              <Button>Start Transfer</Button>
+              <Button size="sm" className="sm:hidden">Start</Button>
+              <Button className="hidden sm:flex">Start Transfer</Button>
             </Link>
           </div>
         </div>
       </header>
 
       <main className="pt-16">
-        <section className="h-[calc(100vh-4rem)] flex items-center relative overflow-hidden w-full">
+        <section className="min-h-[calc(100vh-3.5rem)] flex items-center relative overflow-hidden w-full">
           <WarpBackground className="w-full h-full border-none flex items-center justify-center" gridColor="rgba(255, 255, 255, 0.2)" beamsPerSide={2}>
-            <div className="relative z-10 w-full px-6 md:px-12 lg:px-24">
+            <div className="relative z-10 w-full px-3 sm:px-4 md:px-12 lg:px-24">
               <div className="max-w-4xl mx-auto text-center">
-                <h1 className="text-4xl md:text-7xl font-bold tracking-tight mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+                <h1 className="text-2xl sm:text-3xl md:text-7xl font-bold tracking-tight mb-3 sm:mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
                   AirDrop for
-                  <br />
-                  Everyone, Everywhere
+                  <br className="sm:hidden" />
+                  Everyone,
+                  <br className="hidden sm:block" />
+                  Everywhere
                 </h1>
-                <p className="text-xl text-muted-foreground mb-10 max-w-2xl mx-auto">
-                  Share files instantly between any devices - phones, tablets, computers. No app installation, no sign-up required. Just like AirDrop, but for all platforms.
+                <p className="text-sm sm:text-base md:text-xl text-muted-foreground mb-4 sm:mb-6 md:mb-10 max-w-2xl mx-auto px-2 sm:px-0">
+                  Share files instantly between any devices - phones, tablets, computers. No app installation, no sign-up required.
                 </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-                  <Link href="/share">
-                    <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-colors duration-300">
+                <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center items-center mb-8 sm:mb-12 px-4 sm:px-0">
+                  <Link href="/share" className="w-full sm:w-auto">
+                    <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
                       Transfer Files Now
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </Button>
                   </Link>
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Shield className="h-4 w-4 text-primary/80" />
-                    <span className="text-sm">End-to-end encrypted</span>
+                    <span className="text-xs sm:text-sm">End-to-end encrypted</span>
                   </div>
                 </div>
-                <div className="flex items-center justify-center gap-12">
+                <div className="flex items-center justify-center gap-6 sm:gap-12">
                   <div className="flex flex-col items-center">
-                    <div className="text-3xl font-bold text-primary">5GB+</div>
-                    <div className="text-sm text-muted-foreground/80 mt-1">File Size</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-primary">5GB+</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground/80 mt-1">File Size</div>
                   </div>
-                  <div className="h-10 w-px bg-border/50" />
+                  <div className="h-8 sm:h-10 w-px bg-border/50" />
                   <div className="flex flex-col items-center">
-                    <div className="text-3xl font-bold text-primary">Instant</div>
-                    <div className="text-sm text-muted-foreground/80 mt-1">Transfer</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-primary">Instant</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground/80 mt-1">Transfer</div>
                   </div>
-                  <div className="h-10 w-px bg-border/50" />
+                  <div className="h-8 sm:h-10 w-px bg-border/50" />
                   <div className="flex flex-col items-center">
-                    <div className="text-3xl font-bold text-primary">Any</div>
-                    <div className="text-sm text-muted-foreground/80 mt-1">Platform</div>
+                    <div className="text-2xl sm:text-3xl font-bold text-primary">Any</div>
+                    <div className="text-xs sm:text-sm text-muted-foreground/80 mt-1">Platform</div>
                   </div>
                 </div>
               </div>
@@ -109,27 +109,27 @@ export default function Home() {
                   className="inline-block font-bold text-3xl md:text-6xl"
                 />
               </div>
-              <div className="relative flex w-full flex-col overflow-hidden h-[550px]">
+              <div className="relative flex w-full flex-col overflow-hidden h-[450px] sm:h-[550px]">
                 <div ref={ref}>
                   {inView && (
                     <AnimatedList delay={500} className="text-left">
-                      <figure className="relative mx-auto min-h-fit w-full max-w-[700px] cursor-pointer overflow-hidden rounded-2xl p-8 transition-all duration-300 ease-in-out hover:scale-[102%] border border-transparent hover:border-primary/20 bg-card dark:bg-transparent dark:backdrop-blur-md dark:[border:1px_solid_rgba(255,255,255,.1)] dark:[box-shadow:0_-20px_80px_-20px_#ffffff1f_inset]">
-                        <div className="flex flex-row items-center gap-6">
-                          <div className={`flex size-20 items-center justify-center rounded-[20%] transition-colors duration-300 ${isComplete ? 'bg-green-500' : 'bg-primary/20'} p-2`}>
+                      <figure className="relative mx-auto min-h-fit w-full max-w-[700px] cursor-pointer overflow-hidden rounded-xl sm:rounded-2xl p-4 sm:p-8 transition-all duration-300 ease-in-out hover:scale-[102%] border border-transparent hover:border-primary/20 bg-card dark:bg-transparent dark:backdrop-blur-md dark:[border:1px_solid_rgba(255,255,255,.1)] dark:[box-shadow:0_-20px_80px_-20px_#ffffff1f_inset]">
+                        <div className="flex flex-row items-center gap-3 sm:gap-6">
+                          <div className="flex size-16 sm:size-20 items-center justify-center rounded-[20%] transition-colors duration-300 bg-primary/20 p-2">
                             {isComplete ? (
                               <Check className="h-8 w-8 text-white" />
                             ) : (
                               <span className="text-3xl">📤</span>
                             )}
                           </div>
-                          <div className="flex flex-col overflow-hidden w-full gap-3">
+                          <div className="flex flex-col overflow-hidden w-full gap-2 sm:gap-3">
                             <div className="flex justify-between items-start w-full">
-                              <figcaption className="text-xl font-medium">
+                              <figcaption className="text-lg sm:text-xl font-medium">
                                 {isComplete ? 'Files Sent Successfully' : 'Sending Files...'}
                               </figcaption>
-                              <span className="text-sm text-muted-foreground shrink-0 ml-4">Now</span>
+                              <span className="text-xs sm:text-sm text-muted-foreground shrink-0 ml-2 sm:ml-4">Now</span>
                             </div>
-                            <p className="text-sm font-normal text-muted-foreground mb-2">
+                            <p className="text-xs sm:text-sm font-normal text-muted-foreground mb-2">
                               design-mockup.fig · 4.2 GB
                             </p>
                             <div className="h-1.5 w-full bg-muted/30 rounded-full overflow-hidden">
@@ -177,19 +177,19 @@ export default function Home() {
                     </AnimatedList>
                   )}
                 </div>
-                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-background"></div>
+                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 sm:h-1/3 bg-gradient-to-t from-background"></div>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="features" className="py-20 md:py-24">
-          <div className="px-6 md:px-12 lg:px-24">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose Zapit?</h2>
-              <p className="text-xl text-muted-foreground">The fastest way to share files between devices</p>
+        <section id="features" className="py-8 sm:py-12 md:py-24">
+          <div className="px-3 sm:px-4 md:px-12 lg:px-24">
+            <div className="text-center mb-8 sm:mb-10 md:mb-16">
+              <h2 className="text-xl sm:text-2xl md:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">Why Choose Zapit?</h2>
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground">The fastest way to share files between devices</p>
             </div>
-            <BentoGrid className="auto-rows-[20rem] grid-cols-1 md:grid-cols-3 lg:grid-rows-3 gap-4">
+            <BentoGrid className="auto-rows-[12rem] sm:auto-rows-[15rem] md:auto-rows-[20rem] grid-cols-1 md:grid-cols-3 lg:grid-rows-3 gap-3 sm:gap-4">
               <BentoCard
                 name="Lightning Fast"
                 description="Transfer files at blazing speeds with our peer-to-peer technology. Experience instant file sharing like never before."
@@ -239,15 +239,15 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-20 md:py-24 bg-muted/30">
-          <div className="px-6 md:px-12 lg:px-24">
-            <div className="text-center mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
-              <p className="text-xl text-muted-foreground">Simple, fast, and secure file sharing</p>
+        <section className="py-8 sm:py-12 md:py-24 bg-muted/30">
+          <div className="px-3 sm:px-4 md:px-12 lg:px-24">
+            <div className="text-center mb-8 sm:mb-10 md:mb-16">
+              <h2 className="text-xl sm:text-2xl md:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">How It Works</h2>
+              <p className="text-base sm:text-lg md:text-xl text-muted-foreground">Simple, fast, and secure file sharing</p>
             </div>
-            <div className="grid md:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-4 md:gap-8">
 
-              <div className="group relative overflow-hidden rounded-3xl bg-background p-8 transition-all duration-300 border border-transparent hover:border-primary/30 hover:shadow-lg dark:shadow-primary/10 dark:backdrop-blur-md dark:[border:1px_solid_rgba(255,255,255,.1)] dark:hover:border-primary/50">
+              <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl bg-background p-4 sm:p-6 md:p-8 transition-all duration-300 border border-transparent hover:border-primary/30">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <div className="relative">
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 transition-colors duration-300 group-hover:bg-primary/20">
@@ -258,7 +258,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="group relative overflow-hidden rounded-3xl bg-background p-8 transition-all duration-300 border border-transparent hover:border-primary/30 hover:shadow-lg dark:shadow-primary/10 dark:backdrop-blur-md dark:[border:1px_solid_rgba(255,255,255,.1)] dark:hover:border-primary/50">
+              <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl bg-background p-4 sm:p-6 md:p-8 transition-all duration-300 border border-transparent hover:border-primary/30">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <div className="relative">
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 transition-colors duration-300 group-hover:bg-primary/20">
@@ -269,7 +269,7 @@ export default function Home() {
                 </div>
               </div>
 
-              <div className="group relative overflow-hidden rounded-3xl bg-background p-8 transition-all duration-300 border border-transparent hover:border-primary/30 hover:shadow-lg dark:shadow-primary/10 dark:backdrop-blur-md dark:[border:1px_solid_rgba(255,255,255,.1)] dark:hover:border-primary/50">
+              <div className="group relative overflow-hidden rounded-xl sm:rounded-2xl md:rounded-3xl bg-background p-4 sm:p-6 md:p-8 transition-all duration-300 border border-transparent hover:border-primary/30">
                 <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
                 <div className="relative">
                   <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary/10 transition-colors duration-300 group-hover:bg-primary/20">
@@ -283,15 +283,15 @@ export default function Home() {
           </div>
         </section>
 
-        <section className="py-20 md:py-32">
-          <div className="px-6 md:px-12 lg:px-24">
+        <section className="py-12 sm:py-20 md:py-32">
+          <div className="px-4 sm:px-6 md:px-12 lg:px-24">
             <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold mb-6">Ready to Start Sharing?</h2>
-              <p className="text-xl text-muted-foreground mb-8">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">Ready to Start Sharing?</h2>
+              <p className="text-lg sm:text-xl text-muted-foreground mb-6 sm:mb-8">
                 Join thousands of users who trust Zapit for their file sharing needs.
               </p>
-              <Link href="/share">
-                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 transition-colors duration-300">
+              <Link href="/share" className="block w-full sm:w-auto sm:inline-block">
+                <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
                   Get Started Now
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
@@ -301,11 +301,11 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="border-t py-8">
-        <div className="px-6 md:px-12 lg:px-24">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+      <footer className="border-t py-6 sm:py-8">
+        <div className="px-4 sm:px-6 md:px-12 lg:px-24">
+          <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
             <div className="font-semibold text-lg" style={{ fontFamily: "var(--font-oxanium)" }}>ZAPIT</div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               © {new Date().getFullYear()} Zapit. All rights reserved.
             </div>
           </div>

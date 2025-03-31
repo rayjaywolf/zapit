@@ -616,206 +616,207 @@ export default function SharePage() {
 
 
     return (
-        <div className={`min-h-screen bg-background mx-0 md:mx-8 lg:mx-48 border-x ${popoverOpen ? 'relative' : ''}`}>
-            {popoverOpen && (
-                <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40" />
-            )}
-            <header className={`sticky top-0 z-50 w-full border-b border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-8 ${popoverOpen ? 'blur-sm' : ''}`}>
-                <div className="flex h-14 items-center justify-between">
-                    <div className="font-semibold text-lg">Zapit</div>
-                    <div className="flex items-center gap-1 md:gap-3">
-                        <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted/80 flex items-center gap-1.5 text-xs md:text-sm px-2 py-1">
-                            <Laptop className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
-                            <span className="hidden sm:inline truncate max-w-[100px] md:max-w-[150px]">{deviceInfo.name}</span>
-                            <span className="sm:hidden">Device</span>
-                        </Badge>
-                        <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted/80 flex items-center gap-1.5 text-xs md:text-sm px-2 py-1">
-                            <span className="font-mono tracking-wider">Zap ID: {myPeerId || "..."}</span>
-                        </Badge>
-                    </div>
-                    {/* Dynamic Status Badge */}
-                    <Badge
-                        variant={isConnected && peers.length > 0 ? "secondary" : "outline"}
-                        className={`
+        <WarpBackground className="p-0 overflow-y-hidden" gridColor="rgba(255, 255, 255, 0.2)" beamsPerSide={3}>
+            <div className={`min-h-screen bg-background mx-0 md:mx-8 lg:mx-48 border-x ${popoverOpen ? 'relative' : ''}`}>
+                {popoverOpen && (
+                    <div className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40" />
+                )}
+                <header className={`relative top-0 z-50 w-full border-b border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-8 ${popoverOpen ? 'blur-sm' : ''}`}>
+                    <div className="flex h-14 items-center justify-between">
+                        <div className="font-semibold text-lg">ZAPIT</div>
+                        <div className="flex items-center gap-1 md:gap-3">
+                            <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted/80 flex items-center gap-1.5 text-xs md:text-sm px-2 py-1">
+                                <Laptop className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
+                                <span className="hidden sm:inline truncate max-w-[100px] md:max-w-[150px]">{deviceInfo.name}</span>
+                                <span className="sm:hidden">Device</span>
+                            </Badge>
+                            <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted/80 flex items-center gap-1.5 text-xs md:text-sm px-2 py-1">
+                                <span className="font-mono tracking-wider">Zap ID: {myPeerId || "..."}</span>
+                            </Badge>
+                        </div>
+                        {/* Dynamic Status Badge */}
+                        <Badge
+                            variant={isConnected && peers.length > 0 ? "secondary" : "outline"}
+                            className={`
                              ${isConnected && peers.length > 0
-                                ? 'bg-green-500/10 text-green-600 border-green-500/30'
-                                : 'text-muted-foreground border-dashed'}
+                                    ? 'bg-green-500/10 text-green-600 border-green-500/30'
+                                    : 'text-muted-foreground border-dashed'}
                              text-xs md:text-sm hidden sm:flex items-center gap-1 px-2 py-1
                          `}
-                    >
-                        {isConnected && peers.length > 0 ? (
-                            <>
-                                <CheckCircle className="h-3 w-3" /> Ready to Share
-                            </>
-                        ) : (
-                            "Not Connected"
-                        )}
-
-                    </Badge>
-                </div>
-            </header>
-            <main className="grid grid-cols-1 md:grid-cols-2 h-[calc(100vh-3.5rem)]"> {/* Adjusted for mobile */}
-                {/* Section 1: Connect */}
-                <div className="border-r border-b h-[calc((100vh-3.5rem)/2)] md:h-auto"> {/* Full height on mobile col 1*/}
-                    <div className="h-full flex flex-col p-4 md:p-8">
-                        <div className="flex items-center gap-3 mb-6 md:mb-8">
-                            <div className="bg-primary/10 rounded-lg p-2">
-                                <Link className="h-5 w-5 text-primary" />
-                            </div>
-                            <h2 className="text-lg md:text-xl font-semibold tracking-tight">Connect to Peer</h2>
-                        </div>
-                        <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full px-4 md:px-0">
-                            <div className="space-y-3 md:space-y-4 w-full">
-                                <Input
-                                    placeholder="Enter 4-character Zap ID"
-                                    value={peerIdInput}
-                                    onChange={(e) => setPeerIdInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                                    maxLength={4}
-                                    className="text-base md:text-lg text-center tracking-widest h-11 md:h-12 font-mono disabled:opacity-50 placeholder:text-sm placeholder:text-muted-foreground/70"
-                                    disabled={!myPeerId || isConnecting}
-                                />
-                                <Button
-                                    onClick={handleConnect}
-                                    disabled={!myPeerId || !peerIdInput || peerIdInput.length !== 4 || peerIdInput === myPeerId || isConnecting}
-                                    className="w-full h-11 md:h-12 text-base"
-                                >
-                                    {/* Show specific peer ID only while connecting */}
-                                    {isConnecting && connectingToPeerId ? `Connecting to ${connectingToPeerId}...` : 'Connect'}
-                                </Button>
-                            </div>
-                            {/* Display the page-level connectError state */}
-                            {connectError && (
-                                <p className="text-xs md:text-sm text-red-500 mt-2 text-center">{connectError}</p>
+                        >
+                            {isConnected && peers.length > 0 ? (
+                                <>
+                                    <CheckCircle className="h-3 w-3" /> Ready to Share
+                                </>
+                            ) : (
+                                "Not Connected"
                             )}
-                        </div>
-                    </div>
-                </div>
 
-                {/* Section 2: Connected Peers */}
-                <div className="border-b h-[calc((100vh-3.5rem)/2)] md:h-auto"> {/* Full height on mobile col 1*/}
-                    <div className="h-full flex flex-col p-4 md:p-8">
-                        <div className="flex items-center gap-3 mb-6 md:mb-8">
-                            <div className="bg-primary/10 rounded-lg p-2">
-                                <Globe className="h-5 w-5 text-primary" />
-                            </div>
-                            <h2 className="text-lg md:text-xl font-semibold tracking-tight">Connected Peers</h2>
-                        </div>
-                        <div className="flex-1 flex items-center justify-center w-full">
-                            <ConnectedPeers peers={peers} />
-                        </div>
+                        </Badge>
                     </div>
-                </div>
-
-                {/* Section 3: Upload Area */}
-                <div className="border-r border-b md:border-b-0 h-[calc((100vh-3.5rem)/2)] md:h-auto" // Full height on mobile col 2
-                    onDrop={handleDrop}
-                    onDragOver={handleDragOver}
-                >
-                    <div className="h-full flex flex-col p-4 md:p-8">
-                        <div className="flex items-center gap-3 mb-4">
-                            <div className="bg-primary/10 rounded-lg p-2">
-                                <Upload className="h-5 w-5 text-primary" />
-                            </div>
-                            <h2 className="text-lg md:text-xl font-semibold tracking-tight">Select Files</h2>
-                        </div>
-                        <div className="flex-1 flex items-center justify-center w-full">
-                            <div className="text-center w-full max-w-sm p-4 rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors duration-200">
-                                <div className="w-12 h-12 md:w-16 md:h-16 bg-primary/5 rounded-2xl flex items-center justify-center mx-auto mb-4 md:mb-6">
-                                    <Upload className="h-6 w-6 md:h-8 md:h-8 text-primary" />
-                                </div>
-                                <p className="text-sm md:text-base text-muted-foreground mb-3 md:mb-4">
-                                    Drag & Drop or Click to Select
-                                </p>
-                                <div className="flex items-center gap-3 justify-center text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">
-                                    <div className="h-px w-12 bg-border"></div>
-                                    <span>or</span>
-                                    <div className="h-px w-12 bg-border"></div>
-                                </div>
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    className="hidden"
-                                    multiple
-                                    onChange={handleFileSelect}
-                                // Add accept attribute if you want to limit file types
-                                // accept="image/*, .pdf, .zip"
-                                />
-                                <Button
-                                    variant="outline"
-                                    size="lg"
-                                    onClick={() => fileInputRef.current?.click()}
-                                    className="relative h-10 md:h-11 text-sm md:text-base"
-                                >
-                                    <span className="relative z-10">Browse Files</span>
-                                </Button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Section 4: Selected Files / Progress */}
-                <div className="h-[calc((100vh-3.5rem)/2)] md:h-auto"> {/* Full height on mobile col 2*/}
-                    <div className="h-full flex flex-col p-4 md:p-8">
-                        {/* Header Area */}
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
+                </header>
+                <main className="grid grid-cols-1 md:grid-cols-2 md:grid-rows-2"> {/* Adjusted grid definition */}
+                    {/* Section 1: Connect */}
+                    <div className="border-r border-b h-[calc((100vh-3.5rem)/2)]"> {/* Removed md:h-auto */}
+                        <div className="h-full flex flex-col p-4 md:p-8">
+                            <div className="flex items-center gap-3 mb-6 md:mb-8">
                                 <div className="bg-primary/10 rounded-lg p-2">
-                                    {globalUploadState === 'sending' || globalUploadState === 'complete' || globalUploadState === 'error'
-                                        ? <Send className="h-5 w-5 text-primary" />
-                                        : <File className="h-5 w-5 text-primary" />
-                                    }
+                                    <Link className="h-5 w-5 text-primary" />
                                 </div>
-                                <h2 className="text-lg md:text-xl font-semibold tracking-tight">
-                                    {globalUploadState === 'sending' ? 'Sending Files...' :
-                                        globalUploadState === 'complete' ? 'Transfer Complete!' :
-                                            globalUploadState === 'error' ? 'Transfer Error' :
-                                                receivingFiles.length > 0 ? 'Receiving Files...' :
-                                                    'Selected Files'}
-                                </h2>
+                                <h2 className="text-lg md:text-xl font-semibold tracking-tight">Connect to Peer</h2>
                             </div>
-                            {selectedFiles.length > 0 && globalUploadState === 'idle' && (
-                                <Button
-                                    size="sm"
-                                    className="gap-2 h-9 md:h-10 px-3 md:px-4 text-sm md:text-base"
-                                    onClick={handleSend}
-                                    disabled={peers.length === 0} // Disable if no peers connected
-                                >
-                                    <Send className="h-4 w-4" />
-                                    <span>Send ({selectedFiles.length})</span>
-                                    {peers.length === 0 && <span className="text-xs">(No Peers)</span>}
-                                </Button>
-                            )}
+                            <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full px-4 md:px-0">
+                                <div className="space-y-3 md:space-y-4 w-full">
+                                    <Input
+                                        placeholder="Enter 4-character Zap ID"
+                                        value={peerIdInput}
+                                        onChange={(e) => setPeerIdInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                                        maxLength={4}
+                                        className="text-base md:text-lg text-center tracking-widest h-11 md:h-12 font-mono disabled:opacity-50 placeholder:text-sm placeholder:text-muted-foreground/70"
+                                        disabled={!myPeerId || isConnecting}
+                                    />
+                                    <Button
+                                        onClick={handleConnect}
+                                        disabled={!myPeerId || !peerIdInput || peerIdInput.length !== 4 || peerIdInput === myPeerId || isConnecting}
+                                        className="w-full h-11 md:h-12 text-base"
+                                    >
+                                        {/* Show specific peer ID only while connecting */}
+                                        {isConnecting && connectingToPeerId ? `Connecting to ${connectingToPeerId}...` : 'Connect'}
+                                    </Button>
+                                </div>
+                                {/* Display the page-level connectError state */}
+                                {connectError && (
+                                    <p className="text-xs md:text-sm text-red-500 mt-2 text-center">{connectError}</p>
+                                )}
+                            </div>
                         </div>
+                    </div>
 
-                        {/* Content Area (Progress or File List) */}
-                        <div className="flex-1 overflow-hidden flex flex-col">
-                            {/* Sending Progress View */}
-                            {(globalUploadState === 'sending' || globalUploadState === 'complete' || globalUploadState === 'error') && filesToSendRef.current.length > 0 ? (
-                                <div className="h-full flex flex-col justify-center space-y-4 md:space-y-6 px-2">
-                                    {/* Overall Progress Bar */}
-                                    <div className="space-y-2">
-                                        <div className="flex justify-between text-sm font-medium">
-                                            <span className="text-muted-foreground">
-                                                {globalUploadState === 'sending' ? `Sending ${filesToSendRef.current.length} file(s)...` :
-                                                    globalUploadState === 'complete' ? `Sent ${filesToSendRef.current.length} file(s)` :
-                                                        `Transfer failed`}
-                                            </span>
-                                            <span>{Math.round(overallProgressPercent())}%</span>
-                                        </div>
-                                        <Progress value={overallProgressPercent()} className={`h-2 ${globalUploadState === 'error' ? 'bg-red-500/30 [&>*]:bg-red-500' : ''}`} />
-                                        <div className="flex justify-between text-xs md:text-sm text-muted-foreground">
-                                            <span>
-                                                {formatFileSize(totalBytesUploaded)} / {formatFileSize(totalUploadSize)}
-                                            </span>
-                                            <span>
-                                                {formatFileSize(overallSpeedBps)}/s
-                                                {globalUploadState === 'complete' && ` (Avg: ${formatTime(uploadTime)})`}
-                                            </span>
-                                        </div>
+                    {/* Section 2: Connected Peers */}
+                    <div className="border-b h-[calc((100vh-3.5rem)/2)]"> {/* Removed md:h-auto */}
+                        <div className="h-full flex flex-col p-4 md:p-8">
+                            <div className="flex items-center gap-3 mb-6 md:mb-8">
+                                <div className="bg-primary/10 rounded-lg p-2">
+                                    <Globe className="h-5 w-5 text-primary" />
+                                </div>
+                                <h2 className="text-lg md:text-xl font-semibold tracking-tight">Connected Peers</h2>
+                            </div>
+                            <div className="flex-1 flex items-center justify-center w-full">
+                                <ConnectedPeers peers={peers} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Section 3: Upload Area */}
+                    <div className="border-r border-b md:border-b-0 h-[calc((100vh-3.5rem)/2)]" // Removed md:h-auto
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                    >
+                        <div className="h-full flex flex-col p-4 md:p-8">
+                            <div className="flex items-center gap-3 mb-4">
+                                <div className="bg-primary/10 rounded-lg p-2">
+                                    <Upload className="h-5 w-5 text-primary" />
+                                </div>
+                                <h2 className="text-lg md:text-xl font-semibold tracking-tight">Select Files</h2>
+                            </div>
+                            <div className="flex-1 flex items-center justify-center w-full">
+                                <div className="text-center w-full max-w-xs p-3 rounded-lg border-2 border-dashed border-border hover:border-primary/50 transition-colors duration-200">
+                                    <div className="w-10 h-10 md:w-12 md:h-12 bg-primary/5 rounded-2xl flex items-center justify-center mx-auto mb-3 md:mb-4">
+                                        <Upload className="h-5 w-5 md:h-6 md:h-6 text-primary" />
                                     </div>
+                                    <p className="text-sm text-muted-foreground mb-3">
+                                        Drag & Drop or Click to Select
+                                    </p>
+                                    <div className="flex items-center gap-3 justify-center text-xs md:text-sm text-muted-foreground mb-3 md:mb-4">
+                                        <div className="h-px w-12 bg-border"></div>
+                                        <span>or</span>
+                                        <div className="h-px w-12 bg-border"></div>
+                                    </div>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        className="hidden"
+                                        multiple
+                                        onChange={handleFileSelect}
+                                    // Add accept attribute if you want to limit file types
+                                    // accept="image/*, .pdf, .zip"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="default"
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="relative h-9 md:h-10 text-sm"
+                                    >
+                                        <span className="relative z-10">Browse Files</span>
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
 
-                                    {/* Individual File Status (Optional - can be noisy) */}
-                                    {/*
+                    {/* Section 4: Selected Files / Progress */}
+                    <div className="h-[calc((100vh-3.5rem)/2)]"> {/* Removed md:h-auto */}
+                        <div className="h-full flex flex-col p-4 md:p-8">
+                            {/* Header Area */}
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="bg-primary/10 rounded-lg p-2">
+                                        {globalUploadState === 'sending' || globalUploadState === 'complete' || globalUploadState === 'error'
+                                            ? <Send className="h-5 w-5 text-primary" />
+                                            : <File className="h-5 w-5 text-primary" />
+                                        }
+                                    </div>
+                                    <h2 className="text-lg md:text-xl font-semibold tracking-tight">
+                                        {globalUploadState === 'sending' ? 'Sending Files...' :
+                                            globalUploadState === 'complete' ? 'Transfer Complete!' :
+                                                globalUploadState === 'error' ? 'Transfer Error' :
+                                                    receivingFiles.length > 0 ? 'Receiving Files...' :
+                                                        'Selected Files'}
+                                    </h2>
+                                </div>
+                                {selectedFiles.length > 0 && globalUploadState === 'idle' && (
+                                    <Button
+                                        size="sm"
+                                        className="gap-2 h-9 md:h-10 px-3 md:px-4 text-sm md:text-base"
+                                        onClick={handleSend}
+                                        disabled={peers.length === 0} // Disable if no peers connected
+                                    >
+                                        <Send className="h-4 w-4" />
+                                        <span>Send ({selectedFiles.length})</span>
+                                        {peers.length === 0 && <span className="text-xs">(No Peers)</span>}
+                                    </Button>
+                                )}
+                            </div>
+
+                            {/* Content Area (Progress or File List) */}
+                            <div className="flex-1 overflow-hidden flex flex-col">
+                                {/* Sending Progress View */}
+                                {(globalUploadState === 'sending' || globalUploadState === 'complete' || globalUploadState === 'error') && filesToSendRef.current.length > 0 ? (
+                                    <div className="h-full flex flex-col justify-center space-y-4 md:space-y-6 px-2">
+                                        {/* Overall Progress Bar */}
+                                        <div className="space-y-2">
+                                            <div className="flex justify-between text-sm font-medium">
+                                                <span className="text-muted-foreground">
+                                                    {globalUploadState === 'sending' ? `Sending ${filesToSendRef.current.length} file(s)...` :
+                                                        globalUploadState === 'complete' ? `Sent ${filesToSendRef.current.length} file(s)` :
+                                                            `Transfer failed`}
+                                                </span>
+                                                <span>{Math.round(overallProgressPercent())}%</span>
+                                            </div>
+                                            <Progress value={overallProgressPercent()} className={`h-2 ${globalUploadState === 'error' ? 'bg-red-500/30 [&>*]:bg-red-500' : ''}`} />
+                                            <div className="flex justify-between text-xs md:text-sm text-muted-foreground">
+                                                <span>
+                                                    {formatFileSize(totalBytesUploaded)} / {formatFileSize(totalUploadSize)}
+                                                </span>
+                                                <span>
+                                                    {formatFileSize(overallSpeedBps)}/s
+                                                    {globalUploadState === 'complete' && ` (Avg: ${formatTime(uploadTime)})`}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        {/* Individual File Status (Optional - can be noisy) */}
+                                        {/*
                                       <div className="text-xs text-muted-foreground space-y-1 max-h-[100px] overflow-y-auto">
                                            {filesToSendRef.current.map(f => (
                                                <div key={f.name} className="flex justify-between items-center">
@@ -830,87 +831,88 @@ export default function SharePage() {
                                       </div>
                                       */}
 
-                                </div>
-                            ) : receivingFiles.length > 0 && globalUploadState === 'idle' ? (
-                                // Receiving Progress View
-                                <div className="h-full flex flex-col justify-center space-y-4 md:space-y-6 px-2 overflow-y-auto">
-                                    {receivingFiles.map((file, index) => (
-                                        <div key={`receiving-${file.name}-${index}`} className="space-y-2 border-b pb-3 last:border-b-0">
-                                            <div className="flex items-center justify-between text-sm">
-                                                <div className="flex items-center gap-2 min-w-0">
-                                                    <Download className="h-4 w-4 text-primary flex-shrink-0" />
-                                                    <span className="font-medium truncate" title={file.name}>{file.name}</span>
+                                    </div>
+                                ) : receivingFiles.length > 0 && globalUploadState === 'idle' ? (
+                                    // Receiving Progress View
+                                    <div className="h-full flex flex-col justify-center space-y-4 md:space-y-6 px-2 overflow-y-auto">
+                                        {receivingFiles.map((file, index) => (
+                                            <div key={`receiving-${file.name}-${index}`} className="space-y-2 border-b pb-3 last:border-b-0">
+                                                <div className="flex items-center justify-between text-sm">
+                                                    <div className="flex items-center gap-2 min-w-0">
+                                                        <Download className="h-4 w-4 text-primary flex-shrink-0" />
+                                                        <span className="font-medium truncate" title={file.name}>{file.name}</span>
+                                                    </div>
+                                                    <div className="font-medium flex-shrink-0 pl-2">
+                                                        {Math.round((file.receivedChunks / file.totalChunks) * 100)}%
+                                                    </div>
                                                 </div>
-                                                <div className="font-medium flex-shrink-0 pl-2">
-                                                    {Math.round((file.receivedChunks / file.totalChunks) * 100)}%
+                                                <Progress
+                                                    value={(file.receivedChunks / file.totalChunks) * 100}
+                                                    className="h-2"
+                                                />
+                                                <div className="flex items-center justify-between text-xs md:text-sm text-muted-foreground">
+                                                    <span>From Peer</span> {/* Placeholder - could show peer ID if available */}
+                                                    <div>
+                                                        {formatFileSize(Math.floor((file.receivedChunks / file.totalChunks) * file.size))} / {formatFileSize(file.size)}
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <Progress
-                                                value={(file.receivedChunks / file.totalChunks) * 100}
-                                                className="h-2"
-                                            />
-                                            <div className="flex items-center justify-between text-xs md:text-sm text-muted-foreground">
-                                                <span>From Peer</span> {/* Placeholder - could show peer ID if available */}
-                                                <div>
-                                                    {formatFileSize(Math.floor((file.receivedChunks / file.totalChunks) * file.size))} / {formatFileSize(file.size)}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            ) : (
-                                // Selected Files List View
-                                <div className="h-full flex flex-col overflow-y-auto -mx-4 md:-mx-8">
-                                    {selectedFiles.length > 0 ? (
-                                        <Table>
-                                            <TableHeader className="sticky top-0 bg-background z-10">
-                                                <TableRow className="hover:bg-transparent">
-                                                    <TableHead><div className="pl-4 md:pl-8">Name</div></TableHead>
-                                                    <TableHead><div className="text-right">Size</div></TableHead>
-                                                    <TableHead className="w-[50px]"><div className="pr-4 md:pr-8"></div></TableHead>
-                                                </TableRow>
-                                            </TableHeader>
-                                            <TableBody>
-                                                {selectedFiles.map((file, index) => (
-                                                    <TableRow key={`${file.name}-${index}`} className="hover:bg-muted/50">
-                                                        <TableCell>
-                                                            <div className="pl-4 md:pl-8 font-medium max-w-[150px] md:max-w-[200px] lg:max-w-[250px] truncate" title={file.name}>
-                                                                {file.name}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div className="text-right text-muted-foreground text-xs md:text-sm">
-                                                                {formatFileSize(file.size)}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div className="pr-4 md:pr-8 flex justify-end">
-                                                                <Button
-                                                                    variant="ghost"
-                                                                    size="icon"
-                                                                    className="h-7 w-7 md:h-8 md:w-8 text-muted-foreground hover:text-foreground hover:bg-destructive/10"
-                                                                    onClick={() => handleRemoveFile(index)}
-                                                                >
-                                                                    <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                                                                </Button>
-                                                            </div>
-                                                        </TableCell>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    // Selected Files List View
+                                    <div className="h-full flex flex-col overflow-y-auto -mx-4 md:-mx-8">
+                                        {selectedFiles.length > 0 ? (
+                                            <Table>
+                                                <TableHeader className="sticky top-0 bg-background z-10">
+                                                    <TableRow className="hover:bg-transparent">
+                                                        <TableHead><div className="pl-4 md:pl-8">Name</div></TableHead>
+                                                        <TableHead><div className="text-right">Size</div></TableHead>
+                                                        <TableHead className="w-[50px]"><div className="pr-4 md:pr-8"></div></TableHead>
                                                     </TableRow>
-                                                ))}
-                                            </TableBody>
-                                        </Table>
-                                    ) : (
-                                        <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
-                                            No files selected
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {selectedFiles.map((file, index) => (
+                                                        <TableRow key={`${file.name}-${index}`} className="hover:bg-muted/50">
+                                                            <TableCell>
+                                                                <div className="pl-4 md:pl-8 font-medium max-w-[150px] md:max-w-[200px] lg:max-w-[250px] truncate" title={file.name}>
+                                                                    {file.name}
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="text-right text-muted-foreground text-xs md:text-sm">
+                                                                    {formatFileSize(file.size)}
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell>
+                                                                <div className="pr-4 md:pr-8 flex justify-end">
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-7 w-7 md:h-8 md:w-8 text-muted-foreground hover:text-foreground hover:bg-destructive/10"
+                                                                        onClick={() => handleRemoveFile(index)}
+                                                                    >
+                                                                        <X className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                                                                    </Button>
+                                                                </div>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        ) : (
+                                            <div className="flex-1 flex items-center justify-center text-muted-foreground text-sm">
+                                                No files selected
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
-                </div>
 
-            </main>
-        </div>
+                </main>
+            </div>
+        </WarpBackground>
     )
 }
