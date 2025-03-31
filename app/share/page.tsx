@@ -26,6 +26,8 @@ import { usePeerConnection, ReceivingFile } from "@/hooks/usePeerConnection"
 import { ConnectedPeers } from "@/components/ConnectedPeers"
 import { toast } from "sonner"
 import { PeerError } from 'peerjs'
+import Image from "next/image"
+import { Logo } from "@/components/ui/logo"
 
 type FileWithSize = {
     name: string
@@ -623,7 +625,7 @@ export default function SharePage() {
                 )}
                 <header className={`relative top-0 z-50 w-full border-b border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-8 ${popoverOpen ? 'blur-sm' : ''}`}>
                     <div className="flex h-14 items-center justify-between">
-                        <div className="font-semibold text-lg">ZAPIT</div>
+                        <Logo />
                         <div className="flex items-center gap-1 md:gap-3">
                             <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted/80 flex items-center gap-1.5 text-xs md:text-sm px-2 py-1">
                                 <Laptop className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />

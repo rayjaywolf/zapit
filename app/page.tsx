@@ -12,6 +12,8 @@ import { useState, useEffect } from "react"
 import { BentoGrid, BentoCard } from "@/components/magicui/bento-grid"
 import { WarpBackground } from "@/components/magicui/warp-background"
 import { Marquee } from "@/components/magicui/marquee"
+import Image from "next/image"
+import { Logo } from "@/components/ui/logo"
 
 export default function Home() {
   const [progress, setProgress] = useState(0)
@@ -34,9 +36,7 @@ export default function Home() {
     <div className="min-h-screen w-full bg-background">
       <header className="fixed top-0 w-full z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 md:px-12 lg:px-24">
-          <div className="font-oxanium font-semibold text-lg sm:text-xl tracking-wide">
-            ZAPIT
-          </div>
+          <Logo />
           <div className="flex items-center">
             <Link href="/share">
               <Button size="sm" className="sm:hidden">Start</Button>

@@ -16,10 +16,15 @@ const oxanium = Oxanium({
   variable: "--font-oxanium",
 });
 
-export const metadata: Metadata = {
-  title: "ZapIt",
-  description: "P2P File Sharing App",
-};
+export const metadata = {
+  title: 'Zapit - Instant File Sharing',
+  description: 'Share files instantly between any devices - phones, tablets, computers. No app installation, no sign-up required.',
+  icons: {
+    icon: '/favicon.png',
+    shortcut: '/favicon.png',
+    apple: '/favicon.png',
+  },
+}
 
 export default function RootLayout({
   children,
@@ -28,6 +33,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${oxanium.variable}`}>
+      <head>
+        <link rel="icon" href="/favicon.png" />
+      </head>
       <body className="antialiased font-sans">
         <ThemeProvider defaultTheme="dark" storageKey="zapit-theme">
           {children}
