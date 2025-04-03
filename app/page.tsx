@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { ArrowRight, Zap, Shield, Globe, Lock, Send, Download, Share2, Check, Bell } from "lucide-react"
+import { ArrowRight, Zap, Shield, Globe, Lock, Send, Download, Share2, Check, Bell, Twitter } from "lucide-react"
 import Link from "next/link"
 import { TextReveal } from "@/components/magicui/text-reveal"
 import { SparklesText } from "@/components/magicui/sparkles-text"
@@ -37,8 +37,19 @@ export default function Home() {
       <header className="fixed top-0 w-full z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 md:px-12 lg:px-24">
           <Logo />
-          <div className="hidden sm:flex items-center justify-center px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
-            Contract Address: 3e8eVYoQmGUZSVKWzLnkSt6i6SNkgbwj7SYitkZzpump
+          <div className="hidden sm:flex items-center gap-4">
+            <div className="flex items-center justify-center px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
+              Contract Address: Soon
+            </div>
+            <a
+              href="https://x.com/ZapitDrop"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center p-2 rounded-full hover:bg-primary/10 transition-colors"
+              aria-label="Follow us on Twitter"
+            >
+              <Twitter className="h-4 w-4 text-primary" />
+            </a>
           </div>
           <div className="flex items-center">
             <Link href="/share">
