@@ -292,7 +292,15 @@ export const usePeerConnection = (): UsePeerConnectionReturn => {
                 //     port: 9000,
                 //     path: '/myapp'
                 // });
-                const peer = new Peer(shortId); // Use default PeerServer Cloud
+                const peer = new Peer(shortId, {
+                    debug: 3, // 0 (none), 1 (errors), 2 (warnings & errors), 3 (verbose)
+                    config: {
+                        iceServers: [
+                            { urls: 'stun:stun.l.google.com:19302' },
+                            { urls: 'stun:stun1.l.google.com:19302' },
+                        ]
+                    }
+                }); // Use default PeerServer Cloud
                 peerRef.current = peer
 
                 peer.on('open', (id) => {
