@@ -38,7 +38,7 @@ export default function Home() {
         <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 md:px-12 lg:px-24">
           <Logo />
           <div className="hidden sm:flex items-center justify-center px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
-            Contract Address: Soon
+            Contract Address: 3e8eVYoQmGUZSVKWzLnkSt6i6SNkgbwj7SYitkZzpump
           </div>
           <div className="flex items-center">
             <Link href="/share">
