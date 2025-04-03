@@ -37,6 +37,9 @@ export default function Home() {
       <header className="fixed top-0 w-full z-50 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="flex h-14 sm:h-16 items-center justify-between px-4 sm:px-6 md:px-12 lg:px-24">
           <Logo />
+          <div className="hidden sm:flex items-center justify-center px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
+            Contract Address: Soon
+          </div>
           <div className="flex items-center">
             <Link href="/share">
               <Button size="sm" className="sm:hidden">Start</Button>
@@ -52,7 +55,7 @@ export default function Home() {
             <div className="relative z-10 w-full px-3 sm:px-4 md:px-12 lg:px-24">
               <div className="max-w-4xl mx-auto text-center">
                 <h1 className="text-2xl sm:text-3xl md:text-7xl font-bold tracking-tight mb-3 sm:mb-4 md:mb-6 bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
-                  AirDrop for
+                  AirDrop for&nbsp;
                   <br className="sm:hidden" />
                   Everyone,
                   <br className="hidden sm:block" />
