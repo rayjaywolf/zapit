@@ -39,7 +39,7 @@ export default function Home() {
           <Logo />
           <div className="hidden sm:flex items-center gap-4">
             <div className="flex items-center justify-center px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
-              Contract Address: Soon
+              Contract Address: 3e8eVYoQmGUZSVKWzLnkSt6i6SNkgbwj7SYitkZzpump
             </div>
             <a
               href="https://x.com/ZapitDrop"
