@@ -37,7 +37,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.png" />
       </head>
       <body className="antialiased font-sans">
-        <ThemeProvider defaultTheme="light" storageKey="zapit-theme">
+        <ThemeProvider defaultTheme="dark" storageKey="zapit-theme">
           {children}
         </ThemeProvider>
         <Toaster />
