@@ -3,6 +3,7 @@ import { Inter, Oxanium } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner"
+import { Analytics } from "@vercel/analytics/react"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,6 +40,7 @@ export default function RootLayout({
       <body className="antialiased font-sans">
         <ThemeProvider defaultTheme="dark" storageKey="zapit-theme">
           {children}
+          <Analytics />
         </ThemeProvider>
         <Toaster />
       </body>
