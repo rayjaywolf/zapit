@@ -42,7 +42,7 @@ export default function Home() {
               Contract Address: soon
             </div>
             <a
-              href="https://x.com/ZapitDrop"
+              href="https://x.com/webboltlive"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center justify-center p-2 rounded-full hover:bg-primary/10 transition-colors"
