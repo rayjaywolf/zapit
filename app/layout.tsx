@@ -17,7 +17,7 @@ const oxanium = Oxanium({
 });
 
 export const metadata = {
-  title: 'Zapit - Instant File Sharing',
+  title: 'Bolt - Instant File Sharing',
   description: 'Share files instantly between any devices - phones, tablets, computers. No app installation, no sign-up required.',
   icons: {
     icon: '/favicon.png',
@@ -37,7 +37,7 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.png" />
       </head>
       <body className="antialiased font-sans">
-        <ThemeProvider defaultTheme="dark" storageKey="zapit-theme">
+        <ThemeProvider defaultTheme="light" storageKey="zapit-theme">
           {children}
         </ThemeProvider>
         <Toaster />

@@ -39,7 +39,7 @@ export default function Home() {
           <Logo />
           <div className="hidden sm:flex items-center gap-4">
             <div className="flex items-center justify-center px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
-              Contract Address: 3e8eVYoQmGUZSVKWzLnkSt6i6SNkgbwj7SYitkZzpump
+              Contract Address: soon
             </div>
             <a
               href="https://x.com/ZapitDrop"
@@ -109,7 +109,7 @@ export default function Home() {
         </section>
 
         <TextReveal className="bg-background px-6 md:px-12 lg:px-24">
-          Experience the future of file sharing with Zapit. No limits, no boundaries, just seamless transfers across all your devices.
+          Experience the future of file sharing with Bolt. No limits, no boundaries, just seamless transfers across all your devices.
         </TextReveal>
 
         <section className="py-0 md:py-0 relative overflow-hidden">
@@ -200,7 +200,7 @@ export default function Home() {
         <section id="features" className="py-8 sm:py-12 md:py-24">
           <div className="px-3 sm:px-4 md:px-12 lg:px-24">
             <div className="text-center mb-8 sm:mb-10 md:mb-16">
-              <h2 className="text-xl sm:text-2xl md:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">Why Choose Zapit?</h2>
+              <h2 className="text-xl sm:text-2xl md:text-4xl font-bold mb-2 sm:mb-3 md:mb-4">Why Choose Bolt?</h2>
               <p className="text-base sm:text-lg md:text-xl text-muted-foreground">The fastest way to share files between devices</p>
             </div>
             <BentoGrid className="auto-rows-[12rem] sm:auto-rows-[15rem] md:auto-rows-[20rem] grid-cols-1 md:grid-cols-3 lg:grid-rows-3 gap-3 sm:gap-4">
@@ -268,7 +268,7 @@ export default function Home() {
                     <Share2 className="h-10 w-10 text-primary transition-transform duration-300 group-hover:scale-110" />
                   </div>
                   <h3 className="text-2xl font-semibold mb-3">1. Connect</h3>
-                  <p className="text-muted-foreground">Enter the recipient's Zap ID or let them scan your QR code for an instant secure connection.</p>
+                  <p className="text-muted-foreground">Enter the recipient's Bolt ID or let them scan your QR code for an instant secure connection.</p>
                 </div>
               </div>
 
@@ -302,7 +302,7 @@ export default function Home() {
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-4 sm:mb-6">Ready to Start Sharing?</h2>
               <p className="text-lg sm:text-xl text-muted-foreground mb-6 sm:mb-8">
-                Join thousands of users who trust Zapit for their file sharing needs.
+                Join thousands of users who trust Bolt for their file sharing needs.
               </p>
               <Link href="/share" className="block w-full sm:w-auto sm:inline-block">
                 <Button size="lg" className="w-full sm:w-auto bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
@@ -318,9 +318,9 @@ export default function Home() {
       <footer className="border-t py-6 sm:py-8">
         <div className="px-4 sm:px-6 md:px-12 lg:px-24">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-3 sm:gap-4">
-            <div className="font-semibold text-lg" style={{ fontFamily: "var(--font-oxanium)" }}>ZAPIT</div>
+            <div className="font-semibold text-lg" style={{ fontFamily: "var(--font-oxanium)" }}>BOLT</div>
             <div className="text-xs sm:text-sm text-muted-foreground">
-              © {new Date().getFullYear()} Zapit. All rights reserved.
+              © {new Date().getFullYear()} Bolt. All rights reserved.
             </div>
           </div>
         </div>

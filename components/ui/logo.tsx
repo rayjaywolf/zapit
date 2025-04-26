@@ -8,7 +8,7 @@ export function Logo() {
         <Link href="/" className="flex items-center">
             <Image
                 src="/zapit.png"
-                alt="Zapit Logo"
+                alt="Bolt Logo"
                 width={100}
                 height={32}
                 className="h-8 w-auto"
