@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner"
 import { Analytics } from "@vercel/analytics/react"
+import { PasswordProtection } from "@/components/password-protection"
 
 const inter = Inter({
   subsets: ["latin"],
@@ -39,7 +40,9 @@ export default function RootLayout({
       </head>
       <body className="antialiased font-sans">
         <ThemeProvider defaultTheme="dark" storageKey="zapit-theme">
-          {children}
+          <PasswordProtection>
+            {children}
+          </PasswordProtection>
           <Analytics />
         </ThemeProvider>
         <Toaster />
