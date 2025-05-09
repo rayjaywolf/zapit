@@ -225,7 +225,7 @@ export default function SharePage() {
                     // This relies on the default message format, which isn't guaranteed
                     const match = hookConnectionError.message.match(/peer (\w+)/);
                     const targetPeer = match ? match[1] : connectingToPeerId || 'peer';
-                    userMessage = `Peer ${targetPeer} could not be found or is offline. Please check the Bolt ID.`;
+                    userMessage = `Peer ${targetPeer} could not be found or is offline. Please check the SwiftSend ID.`;
                     break;
                 case 'network':
                     userMessage = "Network error. Please check your connection and try again.";
@@ -633,7 +633,7 @@ export default function SharePage() {
                                 <span className="sm:hidden">Device</span>
                             </Badge>
                             <Badge variant="secondary" className="bg-muted text-muted-foreground hover:bg-muted/80 flex items-center gap-1.5 text-xs md:text-sm px-2 py-1">
-                                <span className="font-mono tracking-wider">Bolt ID: {myPeerId || "..."}</span>
+                                <span className="font-mono tracking-wider">SwiftSend ID: {myPeerId || "..."}</span>
                             </Badge>
                         </div>
                         {/* Dynamic Status Badge */}
@@ -670,7 +670,7 @@ export default function SharePage() {
                             <div className="flex-1 flex flex-col justify-center max-w-sm mx-auto w-full px-4 md:px-0">
                                 <div className="space-y-3 md:space-y-4 w-full">
                                     <Input
-                                        placeholder="Enter 4-character Bolt ID"
+                                        placeholder="Enter 4-character SwiftSend ID"
                                         value={peerIdInput}
                                         onChange={(e) => setPeerIdInput(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
                                         maxLength={4}

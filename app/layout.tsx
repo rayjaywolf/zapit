@@ -18,7 +18,7 @@ const oxanium = Oxanium({
 });
 
 export const metadata = {
-  title: 'Bolt - Instant File Sharing',
+  title: 'SwiftSend - Instant File Sharing',
   description: 'Share files instantly between any devices - phones, tablets, computers. No app installation, no sign-up required.',
   icons: {
     icon: '/favicon.png',
