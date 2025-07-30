@@ -51,7 +51,7 @@ export default function Home() {
           <Logo />
           <div className="hidden sm:flex items-center gap-4">
             <div className="flex items-center justify-center px-2 py-1 rounded-full bg-primary/10 text-xs font-medium text-primary">
-              Contract Address: soon
+              Contract Address: CeXzFnBxrD9Us2hsGuPYbyz3yXx5txGJ78CYsfPtbonk
             </div>
             <a
               href="https://x.com/swiftsendonsol"
